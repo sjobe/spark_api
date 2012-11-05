@@ -10,6 +10,15 @@ describe Contact do
     Contact.should respond_to(:my)
   end
 
+  it "should get a contact's subscriptions" do
+    s = stub_api_get("/subscriptions", "subscriptions/get.json", {
+      :_filter => "RecipientId Eq '20101230223226074201000000'"
+    })
+    contact = Contact.new(:Id => "20101230223226074201000000")
+    contact.subscriptions
+    s.should have_been_requested
+  end
+
   context "/contacts", :support do
     on_get_it "should get all my contacts" do
       stub_api_get("/contacts", 'contacts/contacts.json')
@@ -138,6 +147,17 @@ describe Contact do
       saved_searches.length.should eq(2)
     end
 
+    on_post_it "should create the new saved searches" do
+      stub_api_get("/my/contact", 'contacts/my.json')
+      contact = Contact.my
+      stub_api_get("/contacts/#{contact.Id}/savedsearches", 'contacts/saved_searches/get.json')
+      contact.saved_searches_will_change!
+      contact.saved_searches << SavedSearch.new({ :Name => "A new search name here", :Filter => "City eq 'Test 1'" })
+      contact.saved_searches << SavedSearch.new({ :Name => "A new search name here", :Filter => "City eq 'Test 1'" })
+      contact.saved_searches.length.should eq(4)
+      stub_api_post("/contacts/#{contact.Id}/savedsearches", "contacts/saved_searches/new.json", "saved_searches/post.json")
+      contact.save.should be true
+    end
 
   end
 
@@ -151,6 +171,20 @@ describe Contact do
        saved_searches.should be_an(Array)
        saved_searches.length.should eq(2)
      end
+
+     on_post_it "should create the new listing carts" do
+       stub_api_get("/my/contact", 'contacts/my.json')
+       contact = Contact.my
+       stub_api_get("/contacts/#{contact.Id}/listingcarts", 'contacts/listing_carts/get.json')
+       contact.listing_carts_will_change!
+       contact.listing_carts << ListingCart.new({:Name => "LC A", :ListingIds => ['20081118213437693901000000']})
+       contact.listing_carts << ListingCart.new({:Name => "LC B", :ListingIds => ['20081118213437693901000000']})
+       contact.listing_carts << ListingCart.new({:Name => "LC C", :ListingIds => ['20081118213437693901000000','20081118213437693901000000']})
+       contact.listing_carts.length.should eq(5)
+       stub_api_post("/contacts/#{contact.Id}/listingcarts", "contacts/listing_carts/new.json", "listing_carts/post.json")
+       contact.save.should be true
+     end
+
     end
 
 
