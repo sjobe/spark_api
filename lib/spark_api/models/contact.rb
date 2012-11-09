@@ -38,6 +38,10 @@ module SparkApi
         collect(connection.get("/contacts/export/all", arguments))
       end
 
+      def vow_account(arguments={})
+        VowAccount.new(self.Id, connection.get("/contacts/#{self.Id}/portal", arguments).first)
+      end
+
       # Notify the agent of contact creation via a Spark notification.
       def notify?; params_for_save[:Notify] == true end
       def notify=(notify_me)
